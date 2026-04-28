@@ -6,12 +6,21 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "repository": {
-    "type": "git",
-    "url": "git@github-work:Aspors/canvas-data-visualization.git"
-  },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs"
+  "packageManager": "pnpm@10.33.2",
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.10",
+    "vite-plugin-dts": "^4.5.4"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/canvas-log-chart.es.js",
+      "require": "./dist/canvas-log-chart.umd.js"
+    }
+  }
 }
