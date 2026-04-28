@@ -5,9 +5,7 @@ export class DataManager {
   private rawData: LogPoint[] = [];
 
   public setData(data: LogPoint[]) {
-    this.rawData = data.sort(
-      (a: LogPoint, b: LogPoint) => Number(a) - Number(b),
-    );
+    this.rawData = data.sort((a, b) => a[0] - b[0]);
   }
 
   public getVisibleData(minDepth: number, maxDepth: number): LogPoint[] {
@@ -27,10 +25,13 @@ export class DataManager {
 
     while (left <= right) {
       const mid = Math.floor((left + right) / 2);
-      const midDepth = this.rawData[mid];
 
-      if (Number(midDepth) === targetDepth) return mid;
-      if (Number(midDepth) < targetDepth) left = mid + 1;
+      const point = this.rawData[mid];
+
+      const midDepth = point[0];
+
+      if (midDepth === targetDepth) return mid;
+      if (midDepth < targetDepth) left = mid + 1;
       else right = mid - 1;
     }
 

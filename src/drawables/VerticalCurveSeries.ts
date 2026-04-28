@@ -20,14 +20,29 @@ export class VerticalCurveSeries implements ICanvasDrawable {
 
     if (points.length === 0) return;
 
+    let minVal = Infinity;
+    let maxVal = -Infinity;
+
+    for (let i = 0; i < points.length; i++) {
+      const val = points[i];
+      if (val[1] < minVal) minVal = val[1];
+      if (val[1] > maxVal) maxVal = val[1];
+    }
+
+    const range = maxVal - minVal || 1;
+    const padding = range * 0.05;
+
+    this.scales.x.domainMin = minVal - padding;
+    this.scales.x.domainMax = maxVal + padding;
+
     ctx.beginPath();
     ctx.strokeStyle = this.options.color;
     ctx.lineWidth = this.options.lineWidth || 1.5;
     ctx.lineJoin = "round";
 
     for (let i = 0; i < points.length; i++) {
-      const xPix = this.scales.x.toPixel(points[i][0]);
-      const yPix = this.scales.y.toPixel(points[i][1]);
+      const xPix = this.scales.x.toPixel(points[i][1]);
+      const yPix = this.scales.y.toPixel(points[i][0]);
 
       if (i === 0) {
         ctx.moveTo(xPix, yPix);
@@ -37,5 +52,7 @@ export class VerticalCurveSeries implements ICanvasDrawable {
     }
 
     ctx.stroke();
+
+    ctx.restore();
   }
 }
