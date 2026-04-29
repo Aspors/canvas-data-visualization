@@ -1,6 +1,10 @@
 import { ICanvasDrawable } from "../core/@types/core.types";
 import { Scale } from "../scales/Scale";
 
+const NICE_HIGH = 7.5;
+const NICE_MID = 3.5;
+const NICE_LOW = 1.5;
+
 export class Grid implements ICanvasDrawable {
   constructor(private scales: { x: Scale; y: Scale }) {}
 
@@ -10,9 +14,9 @@ export class Grid implements ICanvasDrawable {
     const normalized = roughStep / magnitude;
 
     let niceMultiplier = 1;
-    if (normalized > 7.5) niceMultiplier = 10;
-    else if (normalized > 3.5) niceMultiplier = 5;
-    else if (normalized > 1.5) niceMultiplier = 2;
+    if (normalized > NICE_HIGH) niceMultiplier = 10;
+    else if (normalized > NICE_MID) niceMultiplier = 5;
+    else if (normalized > NICE_LOW) niceMultiplier = 2;
 
     return niceMultiplier * magnitude;
   }

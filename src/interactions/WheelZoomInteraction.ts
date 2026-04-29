@@ -1,7 +1,10 @@
-// src/interactions/WheelZoomInteraction.ts
-
 import { Scale } from "../scales/Scale";
-import { Layer } from "../core/Layer";
+import type { IMarkDirty } from "../core/@types/core.types";
+
+export interface ZoomOptions {
+  minSpan?: number;
+  maxSpan?: number;
+}
 
 export class WheelZoomInteraction {
   private zoomSpeed = 0.1;
@@ -9,7 +12,8 @@ export class WheelZoomInteraction {
   constructor(
     private container: HTMLElement,
     private scaleY: Scale,
-    private layer: Layer,
+    private layers: IMarkDirty[],
+    private options: ZoomOptions = {},
   ) {
     this.attachEvents();
   }
@@ -28,16 +32,17 @@ export class WheelZoomInteraction {
 
     const zoomFactor = e.deltaY > 0 ? 1 + this.zoomSpeed : 1 - this.zoomSpeed;
 
-    const currentDomainMin = this.scaleY.domainMin;
-    const currentDomainMax = this.scaleY.domainMax;
+    const newMin = anchorDepth - (anchorDepth - this.scaleY.domainMin) * zoomFactor;
+    const newMax = anchorDepth - (anchorDepth - this.scaleY.domainMax) * zoomFactor;
 
-    const newMin = anchorDepth - (anchorDepth - currentDomainMin) * zoomFactor;
-    const newMax = anchorDepth - (anchorDepth - currentDomainMax) * zoomFactor;
+    const newSpan = Math.abs(newMax - newMin);
+    if (newSpan < (this.options.minSpan ?? 1e-10)) return;
+    if (this.options.maxSpan !== undefined && newSpan > this.options.maxSpan) return;
 
     this.scaleY.domainMin = newMin;
     this.scaleY.domainMax = newMax;
 
-    this.layer.needsUpdate = true;
+    this.layers.forEach((layer) => { layer.needsUpdate = true; });
   };
 
   public destroy() {

@@ -1,4 +1,8 @@
-import { ICanvasDrawable, IRenderable } from "./@types/core.types";
+import { ICanvasDrawable, IPreparable, IRenderable } from "./@types/core.types";
+
+function isPreparable(d: ICanvasDrawable): d is ICanvasDrawable & IPreparable {
+  return "prepare" in d;
+}
 
 export class Layer implements IRenderable {
   public needsUpdate: boolean = true;
@@ -19,7 +23,10 @@ export class Layer implements IRenderable {
 
     this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
 
-    this.drawables.forEach((d) => d.draw(this.ctx));
+    this.drawables.forEach((d) => {
+      if (isPreparable(d)) d.prepare();
+      d.draw(this.ctx);
+    });
 
     this.needsUpdate = false;
   }

@@ -12,12 +12,16 @@ export abstract class Scale {
 
 export class LinearScale extends Scale {
   public toPixel(value: number): number {
-    const ratio = (value - this.domainMin) / (this.domainMax - this.domainMin);
+    const domainSpan = this.domainMax - this.domainMin;
+    if (domainSpan === 0) return this.rangeMin;
+    const ratio = (value - this.domainMin) / domainSpan;
     return this.rangeMin + ratio * (this.rangeMax - this.rangeMin);
   }
 
   public toValue(pixel: number): number {
-    const ratio = (pixel - this.rangeMin) / (this.rangeMax - this.rangeMin);
+    const rangeSpan = this.rangeMax - this.rangeMin;
+    if (rangeSpan === 0) return this.domainMin;
+    const ratio = (pixel - this.rangeMin) / rangeSpan;
     return this.domainMin + ratio * (this.domainMax - this.domainMin);
   }
 }

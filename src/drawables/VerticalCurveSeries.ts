@@ -1,13 +1,42 @@
-import { ICanvasDrawable } from "../core/@types/core.types";
+import type { ICanvasDrawable, IPreparable } from "../core/@types/core.types";
 import type { DataManager } from "../data/DataManager";
 import { Scale } from "../scales/Scale";
 
-export class VerticalCurveSeries implements ICanvasDrawable {
+export class VerticalCurveSeries implements ICanvasDrawable, IPreparable {
+  public prepare(): void {
+    this.updateXDomain();
+  }
+
   constructor(
     private dataManager: DataManager,
     private scales: { x: Scale; y: Scale },
     private options: { color: string; lineWidth?: number },
   ) {}
+
+  public updateXDomain(): void {
+    const viewMinDepth = this.scales.y.toValue(this.scales.y.rangeMin);
+    const viewMaxDepth = this.scales.y.toValue(this.scales.y.rangeMax);
+
+    const minD = Math.min(viewMinDepth, viewMaxDepth);
+    const maxD = Math.max(viewMinDepth, viewMaxDepth);
+
+    const points = this.dataManager.getVisibleData(minD, maxD);
+    if (points.length === 0) return;
+
+    let minVal = Infinity;
+    let maxVal = -Infinity;
+
+    for (let i = 0; i < points.length; i++) {
+      if (points[i][1] < minVal) minVal = points[i][1];
+      if (points[i][1] > maxVal) maxVal = points[i][1];
+    }
+
+    const range = maxVal - minVal || 1;
+    const padding = range * 0.05;
+
+    this.scales.x.domainMin = minVal - padding;
+    this.scales.x.domainMax = maxVal + padding;
+  }
 
   public draw(ctx: CanvasRenderingContext2D): void {
     const viewMinDepth = this.scales.y.toValue(this.scales.y.rangeMin);
@@ -20,21 +49,7 @@ export class VerticalCurveSeries implements ICanvasDrawable {
 
     if (points.length === 0) return;
 
-    let minVal = Infinity;
-    let maxVal = -Infinity;
-
-    for (let i = 0; i < points.length; i++) {
-      const val = points[i];
-      if (val[1] < minVal) minVal = val[1];
-      if (val[1] > maxVal) maxVal = val[1];
-    }
-
-    const range = maxVal - minVal || 1;
-    const padding = range * 0.05;
-
-    this.scales.x.domainMin = minVal - padding;
-    this.scales.x.domainMax = maxVal + padding;
-
+    ctx.save();
     ctx.beginPath();
     ctx.strokeStyle = this.options.color;
     ctx.lineWidth = this.options.lineWidth || 1.5;
@@ -52,7 +67,6 @@ export class VerticalCurveSeries implements ICanvasDrawable {
     }
 
     ctx.stroke();
-
     ctx.restore();
   }
 }

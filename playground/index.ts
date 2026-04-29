@@ -21,12 +21,21 @@ for (let i = 0; i < 100000; i++) {
 
 dataManager.setData(mockData);
 
-const scaleX = new LinearScale(0, 100, 0, 400);
+const { width: containerWidth, height: containerHeight } = container.getBoundingClientRect();
 
-const scaleY = new LinearScale(-1000, -1100, 0, 800);
+const scaleX = new LinearScale(0, 100, 0, containerWidth);
+const scaleY = new LinearScale(
+  mockData[0][0],
+  mockData[mockData.length - 1][0],
+  0,
+  containerHeight,
+);
 
 const engine = new ChartEngine();
-const renderer = new Renderer(container, engine);
+const renderer = new Renderer(container, engine, (w, h) => {
+  scaleX.rangeMax = w;
+  scaleY.rangeMax = h;
+});
 
 const bgLayer = renderer.createLayer("background", 0);
 const grid = new Grid({ x: scaleX, y: scaleY });
@@ -41,4 +50,10 @@ const curve = new VerticalCurveSeries(
 dataLayer.add(curve);
 engine.startLoop();
 
-new WheelZoomInteraction(container, scaleY, dataLayer);
+const fullDataSpan = mockData.length > 0
+  ? Math.abs(mockData[mockData.length - 1][0] - mockData[0][0])
+  : 1000;
+new WheelZoomInteraction(container, scaleY, [bgLayer, dataLayer], {
+  minSpan: 10,
+  maxSpan: fullDataSpan,
+});

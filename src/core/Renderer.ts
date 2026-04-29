@@ -10,6 +10,7 @@ export class Renderer {
   constructor(
     private container: HTMLElement,
     private engine: ChartEngine,
+    private onResize?: (width: number, height: number) => void,
   ) {
     this.container.style.position = "relative";
     this.container.style.overflow = "hidden";
@@ -58,7 +59,7 @@ export class Renderer {
     canvas.style.width = `${rect.width}px`;
     canvas.style.height = `${rect.height}px`;
 
-    ctx.scale(dpr, dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
   private handleResize = () => {
@@ -66,6 +67,8 @@ export class Renderer {
       this.resizeCanvas(layer.canvas, layer.ctx);
       layer.needsUpdate = true;
     });
+    const { width, height } = this.container.getBoundingClientRect();
+    this.onResize?.(width, height);
   };
 
   public destroy() {

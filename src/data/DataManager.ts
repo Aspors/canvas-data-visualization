@@ -5,18 +5,16 @@ export class DataManager {
   private rawData: LogPoint[] = [];
 
   public setData(data: LogPoint[]) {
-    this.rawData = data.sort((a, b) => a[0] - b[0]);
+    this.rawData = [...data].sort((a, b) => a[0] - b[0]);
   }
 
   public getVisibleData(minDepth: number, maxDepth: number): LogPoint[] {
     if (this.rawData.length === 0) return [];
 
     const startIndex = this.binarySearch(minDepth);
-    let endIndex = this.binarySearch(maxDepth);
+    const endIndex = this.binarySearch(maxDepth);
 
-    if (endIndex < this.rawData.length - 1) endIndex++;
-
-    return this.rawData.slice(startIndex, endIndex);
+    return this.rawData.slice(startIndex, endIndex + 1);
   }
 
   private binarySearch(targetDepth: number): number {
