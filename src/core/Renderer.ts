@@ -1,5 +1,3 @@
-// src/core/Renderer.ts
-
 import ChartEngine from "./ChartEngine";
 import { Layer } from "./Layer";
 

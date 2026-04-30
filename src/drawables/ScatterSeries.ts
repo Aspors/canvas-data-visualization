@@ -2,14 +2,19 @@ import type { ICanvasDrawable, IPreparable } from "../core/@types/core.types";
 import type { DataManager } from "../data/DataManager";
 import { Scale } from "../scales/Scale";
 
-export class VerticalCurveSeries implements ICanvasDrawable, IPreparable {
+export interface ScatterSeriesOptions {
+  color?: string;
+  radius?: number;
+}
+
+export class ScatterSeries implements ICanvasDrawable, IPreparable {
   private lastViewMin = NaN;
   private lastViewMax = NaN;
 
   constructor(
     private dataManager: DataManager,
     private scales: { x: Scale; y: Scale },
-    private options: { color: string; lineWidth?: number },
+    private options: ScatterSeriesOptions = {},
   ) {}
 
   public invalidateCache(): void {
@@ -27,21 +32,21 @@ export class VerticalCurveSeries implements ICanvasDrawable, IPreparable {
     this.updateXDomain();
   }
 
-  public updateXDomain(): void {
+  private updateXDomain(): void {
     const { x: sx } = this.scales;
     const [minD, maxD] = this.viewDepthRange();
-    const flat = this.dataManager.getDownsampledData(minD, maxD, this.bucketCount());
-    if (flat.length === 0) return;
+    const points = this.dataManager.getVisibleData(minD, maxD);
+    if (points.length === 0) return;
 
-    let minVal = flat[1];
-    let maxVal = flat[1];
-    for (let i = 1; i < flat.length; i += 2) {
-      if (flat[i] < minVal) minVal = flat[i];
-      if (flat[i] > maxVal) maxVal = flat[i];
+    let minVal = Infinity;
+    let maxVal = -Infinity;
+    for (const p of points) {
+      if (p[1] < minVal) minVal = p[1];
+      if (p[1] > maxVal) maxVal = p[1];
     }
 
     const range = maxVal - minVal || 1;
-    const padding = range * 0.05;
+    const padding = range * 0.1;
     sx.domainMin = minVal - padding;
     sx.domainMax = maxVal + padding;
   }
@@ -49,23 +54,23 @@ export class VerticalCurveSeries implements ICanvasDrawable, IPreparable {
   public draw(ctx: CanvasRenderingContext2D): void {
     const { x: sx, y: sy } = this.scales;
     const [minD, maxD] = this.viewDepthRange();
-    const flat = this.dataManager.getDownsampledData(minD, maxD, this.bucketCount());
-    if (flat.length === 0) return;
+    const points = this.dataManager.getVisibleData(minD, maxD);
+    if (points.length === 0) return;
+
+    const radius = this.options.radius ?? 4;
 
     ctx.save();
+    ctx.fillStyle = this.options.color ?? "#e060b0";
     ctx.beginPath();
-    ctx.strokeStyle = this.options.color;
-    ctx.lineWidth = this.options.lineWidth ?? 1.5;
-    ctx.lineJoin = "round";
 
-    for (let i = 0; i < flat.length; i += 2) {
-      const yPix = sy.toPixel(flat[i]);
-      const xPix = sx.toPixel(flat[i + 1]);
-      if (i === 0) ctx.moveTo(xPix, yPix);
-      else         ctx.lineTo(xPix, yPix);
+    for (const [depth, value] of points) {
+      const xPix = sx.toPixel(value);
+      const yPix = sy.toPixel(depth);
+      ctx.moveTo(xPix + radius, yPix);
+      ctx.arc(xPix, yPix, radius, 0, Math.PI * 2);
     }
 
-    ctx.stroke();
+    ctx.fill();
     ctx.restore();
   }
 
@@ -74,10 +79,5 @@ export class VerticalCurveSeries implements ICanvasDrawable, IPreparable {
     const a = sy.toValue(sy.rangeMin);
     const b = sy.toValue(sy.rangeMax);
     return [Math.min(a, b), Math.max(a, b)];
-  }
-
-  private bucketCount(): number {
-    const { y: sy } = this.scales;
-    return Math.ceil(Math.abs(sy.rangeMax - sy.rangeMin) * window.devicePixelRatio);
   }
 }

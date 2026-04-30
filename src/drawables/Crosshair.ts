@@ -4,6 +4,7 @@ import { Scale } from "../scales/Scale";
 
 export interface CrosshairOptions {
   showYTooltip?: boolean;
+  trackIndex?: number;
 }
 
 export class CrosshairDrawable implements ICanvasDrawable {
@@ -20,7 +21,10 @@ export class CrosshairDrawable implements ICanvasDrawable {
     const { x, y } = position;
     const { x: sx, y: sy } = this.scales;
     const showY = this.options.showYTooltip ?? true;
-    const inTrack = x >= sx.rangeMin && x <= sx.rangeMax;
+
+    const inTrack = (this.options.trackIndex !== undefined && this.state.activeTrackIndex !== undefined)
+      ? this.state.activeTrackIndex === this.options.trackIndex
+      : x >= sx.rangeMin && x <= sx.rangeMax;
 
     ctx.save();
     ctx.strokeStyle = "rgba(255,255,255,0.5)";

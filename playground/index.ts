@@ -1,68 +1,48 @@
-import ChartEngine from "../src/core/ChartEngine";
-import { Renderer } from "../src/core/Renderer";
 import { DataManager, LogPoint } from "../src/data/DataManager";
-import { Grid } from "../src/drawables/Grid";
-import { VerticalCurveSeries } from "../src/drawables/VerticalCurveSeries";
-import { WheelZoomInteraction } from "../src/interactions/WheelZoomInteraction";
-import { CrosshairState } from "../src/interactions/CrosshairState";
-import { CrosshairInteraction } from "../src/interactions/CrosshairInteraction";
-import { CrosshairDrawable } from "../src/drawables/Crosshair";
-import { LinearScale } from "../src/scales/Scale";
+import { WellLogChart } from "../src/WellLogChart";
 
 const container = document.getElementById("chart-container");
 if (!container) throw new Error("Container not found");
 
-const dataManager = new DataManager();
-const mockData: LogPoint[] = [];
-let currentValue = 50;
+const dm1 = new DataManager();
+const dm2 = new DataManager();
+const dm3 = new DataManager();
+
+let v = 50;
+const data1: LogPoint[] = [];
+const data2: LogPoint[] = [];
+const data3: LogPoint[] = [];
 
 for (let i = 0; i < 100000; i++) {
   const depth = -1000 - i * 0.01;
-  currentValue += (Math.random() - 0.5) * 5;
-  mockData.push([depth, currentValue]);
+  v += (Math.random() - 0.5) * 5;
+  data1.push([depth, v]);
+  v += (Math.random() - 0.5) * 5;
+  data2.push([depth, v]);
+}
+// Sparse scatter data: one point every ~100 depth units
+for (let i = 0; i < 200; i++) {
+  const depth = -1000 - i * 5;
+  v += (Math.random() - 0.5) * 20;
+  data3.push([depth, Math.max(0, Math.min(1, (v % 100) / 100))]);
 }
 
-dataManager.setData(mockData);
+dm1.setData(data1);
+dm2.setData(data2);
+dm3.setData(data3);
 
-const { width: containerWidth, height: containerHeight } = container.getBoundingClientRect();
+const chart = new WellLogChart(container, { trackGap: 8 })
+  .addTrack(dm1,      { name: "GR",      color: "#5b9bd5" })
+  .addTrack(dm2,      { name: "DT",      color: "#70ad47" })
+  .addScatterTrack(dm3, { name: "SW_CORE", color: "#e060b0", radius: 4 })
+  .enableDepthAxis()
+  .enableCrosshair()
+  .enableZoom({ minSpan: 10 })
+  .start();
 
-const scaleX = new LinearScale(0, 100, 0, containerWidth);
-const scaleY = new LinearScale(
-  mockData[0][0],
-  mockData[mockData.length - 1][0],
-  0,
-  containerHeight,
-);
-
-const engine = new ChartEngine();
-const renderer = new Renderer(container, engine, (w, h) => {
-  scaleX.rangeMax = w;
-  scaleY.rangeMax = h;
-});
-
-const bgLayer = renderer.createLayer("background", 0);
-const grid = new Grid({ x: scaleX, y: scaleY });
-bgLayer.add(grid);
-
-const dataLayer = renderer.createLayer("data", 1);
-const curve = new VerticalCurveSeries(
-  dataManager,
-  { x: scaleX, y: scaleY },
-  { color: "#b17be0" },
-);
-dataLayer.add(curve);
-
-const uiLayer = renderer.createLayer("ui", 2);
-const crosshairState = new CrosshairState();
-uiLayer.add(new CrosshairDrawable(crosshairState, { x: scaleX, y: scaleY }));
-new CrosshairInteraction(container, crosshairState, [uiLayer]);
-
-engine.startLoop();
-
-const fullDataSpan = mockData.length > 0
-  ? Math.abs(mockData[mockData.length - 1][0] - mockData[0][0])
-  : 1000;
-new WheelZoomInteraction(container, scaleY, [bgLayer, dataLayer, uiLayer], {
-  minSpan: 10,
-  maxSpan: fullDataSpan,
-});
+// Mount header above the chart
+const wrapper = document.createElement("div");
+wrapper.className = "chart-wrapper";
+container.parentElement!.insertBefore(wrapper, container);
+wrapper.appendChild(chart.createHeaderElement());
+wrapper.appendChild(container);

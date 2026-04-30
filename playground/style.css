@@ -6,10 +6,25 @@ html {
   height: 100%;
   background-color: #1a1a1a;
   overflow: hidden;
+  font-family: sans-serif;
+  color: #ddd;
+}
+
+.chart-wrapper {
+  display: inline-flex;
+  flex-direction: column;
+  width: 60%;
+  height: 100%;
+}
+
+.chart-wrapper > div:first-child {
+  background-color: #242424;
+  border-bottom: 1px solid #333;
+  flex-shrink: 0;
 }
 
 #chart-container {
-  width: 100%;
-  height: 800px;
+  flex: 1;
+  min-height: 0;
   position: relative;
 }
